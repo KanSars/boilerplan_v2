@@ -1,0 +1,670 @@
+:root {
+  color: #172033;
+  background: #eef2f5;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: 1px solid #c7d0da;
+  background: #ffffff;
+  color: #172033;
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.appShell {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.topBar {
+  height: 76px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #d3dbe4;
+  background: #ffffff;
+}
+
+.topBar h1,
+.workspaceHeader h2,
+.inspector h2 {
+  margin: 0;
+}
+
+.topBar h1 {
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.workspaceHeader h2 {
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.inspector h2 {
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: #64748b;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.statusCluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: end;
+}
+
+.readinessBadge {
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-weight: 700;
+}
+
+.readinessBadge.blocked {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.readinessBadge.ready {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.draftState,
+.muted,
+small {
+  color: #64748b;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.body:has(.inspector) {
+  grid-template-columns: 210px minmax(0, 1fr) 280px;
+}
+
+.workspaceNav {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-right: 1px solid #d3dbe4;
+  background: #f8fafc;
+  overflow: auto;
+}
+
+.workspaceNav button {
+  text-align: left;
+}
+
+.workspaceNav button.active,
+.row.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.workspace {
+  min-width: 0;
+  min-height: 0;
+  padding: 18px;
+  overflow: auto;
+}
+
+.workspaceHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.workspaceHeader p {
+  max-width: 760px;
+  margin: 0;
+}
+
+.toolbarHeader {
+  display: grid;
+  grid-template-columns: minmax(180px, 320px) minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.helpButton {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-weight: 800;
+}
+
+.helpButton.active {
+  color: #ffffff;
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.helpBar {
+  padding: 10px 20px;
+  color: #17315f;
+  background: #dbeafe;
+  border-bottom: 1px solid #bfdbfe;
+}
+
+.formGrid,
+.issueGrid,
+.exportGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.fieldCard,
+.issuePanel,
+.exportGrid article,
+.editorPane,
+.listPane,
+.inspector,
+.connectionCard {
+  background: #ffffff;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.fieldCard {
+  display: grid;
+  gap: 8px;
+}
+
+.fieldCard input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 9px;
+}
+
+.readinessStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.readinessStrip span,
+.fileChip,
+.blockerLine {
+  display: inline-flex;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 6px 9px;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.groupBlock {
+  margin-bottom: 16px;
+}
+
+.groupBlock h3,
+.editorPane h3,
+.issuePanel h3 {
+  margin: 0 0 8px;
+}
+
+.row,
+.issueItem {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  margin-bottom: 8px;
+  text-align: left;
+}
+
+.primary {
+  background: #1d4ed8;
+  color: #ffffff;
+  border-color: #1d4ed8;
+}
+
+.facts,
+.cpGrid,
+.connectionList {
+  display: grid;
+  gap: 10px;
+}
+
+.cpRow {
+  display: grid;
+  gap: 3px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.cpRow.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.cardEditorGrid,
+.pointEditor {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.cardEditorGrid label,
+.pointEditor label,
+.inspector label {
+  display: grid;
+  gap: 5px;
+}
+
+.cardEditorGrid input,
+.pointEditor input,
+.inspector input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.pointPreview {
+  width: 100%;
+  height: 220px;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.pointPreview.compact {
+  height: 142px;
+  margin: 12px 0;
+}
+
+.previewPoint {
+  cursor: pointer;
+}
+
+.previewPoint.active circle {
+  stroke: #0f172a;
+  stroke-width: 28px;
+}
+
+.planCanvas,
+.sheetCanvas {
+  width: 100%;
+  height: min(72vh, 720px);
+  border: 1px solid #ccd6e0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.zoomViewport {
+  width: 100%;
+  height: min(74vh, 760px);
+  min-height: 420px;
+  overflow: scroll;
+  border: 1px solid #ccd6e0;
+  border-radius: 8px;
+  background: #ffffff;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+}
+
+.zoomContent {
+  width: 100%;
+  height: 100%;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.zoomViewport .planCanvas {
+  display: block;
+  border: 0;
+  border-radius: 0;
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+}
+
+.zoomControls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid #c7d0da;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.zoomControls button {
+  border: 0;
+  border-radius: 0;
+  min-width: 38px;
+}
+
+.zoomControls button + button {
+  border-left: 1px solid #d8e0e8;
+}
+
+.schematicZoomContent {
+  transform-origin: top left;
+  padding: 14px;
+  min-height: 280px;
+}
+
+.draggable {
+  cursor: grab;
+}
+
+.draggable:active {
+  cursor: grabbing;
+}
+
+.planCanvas {
+  cursor: grab;
+  touch-action: none;
+}
+
+.planCanvas:active {
+  cursor: grabbing;
+}
+
+.sheetCanvas {
+  aspect-ratio: 420 / 297;
+  height: auto;
+}
+
+.drawingViewport {
+  width: 100%;
+  height: min(72vh, 720px);
+  min-height: 420px;
+  overflow: auto;
+  border: 1px solid #ccd6e0;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 16px;
+  overscroll-behavior: contain;
+}
+
+.drawingViewport .sheetCanvas {
+  display: block;
+  max-width: none;
+  max-height: none;
+  border: 1px solid #ccd6e0;
+  border-radius: 0;
+  background: #ffffff;
+}
+
+.selectedSvg rect {
+  stroke: #2563eb;
+  stroke-width: 3px;
+}
+
+.connectionCard {
+  display: grid;
+  gap: 8px;
+}
+
+.schematicViewport {
+  width: 100%;
+  height: min(74vh, 760px);
+  min-height: 420px;
+  overflow: auto;
+  border: 1px solid #ccd6e0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.schematicStage {
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.schematicSvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: #ffffff;
+}
+
+.schematicTitle {
+  font-size: 22px;
+  font-weight: 800;
+  fill: #172033;
+}
+
+.schematicNode {
+  fill: #f8fafc;
+  stroke: #111827;
+  stroke-width: 2;
+}
+
+.schematicBoilerCircle {
+  fill: #ffffff;
+  stroke: #111827;
+  stroke-width: 2;
+}
+
+.schematicNodeLabel {
+  font-size: 24px;
+  font-weight: 800;
+  fill: #111827;
+}
+
+.schematicNodeNote,
+.schematicSmall {
+  font-size: 16px;
+  fill: #475569;
+}
+
+.schematicPipe {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.schematicPipe.supply {
+  stroke: #b91c1c;
+}
+
+.supplyText {
+  fill: #b91c1c;
+}
+
+.schematicPipe.return {
+  stroke: #1d4ed8;
+}
+
+.returnText {
+  fill: #1d4ed8;
+}
+
+.schematicPipe.gas {
+  stroke: #a16207;
+}
+
+.gasText {
+  fill: #a16207;
+}
+
+.schematicPipe.flue {
+  stroke: #475569;
+  stroke-dasharray: 10 8;
+}
+
+.schematicLabel {
+  font-size: 16px;
+  font-weight: 700;
+  fill: #172033;
+}
+
+.schematicValve {
+  fill: #ffffff;
+  stroke: #111827;
+  stroke-width: 2;
+}
+
+.schematicValveLine {
+  stroke: #111827;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.connectionDetails {
+  margin-top: 12px;
+}
+
+.connectionDetails summary {
+  cursor: pointer;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.planActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.dangerButton {
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: #fff7f7;
+}
+
+.addMenu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px;
+  margin: -4px 0 12px;
+  padding: 10px;
+  background: #ffffff;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+}
+
+.addMenu button,
+.fileButton {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+}
+
+.inspector {
+  border-radius: 0;
+  border-top: 0;
+  border-bottom: 0;
+  border-right: 0;
+  overflow: auto;
+}
+
+.inspector dl {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 8px;
+}
+
+.inspector dt {
+  color: #64748b;
+}
+
+.exportGrid article {
+  min-height: 260px;
+}
+
+.fileChip,
+.blockerLine {
+  margin: 0 6px 6px 0;
+}
+
+.fileButton {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 1080px) {
+  .body {
+    grid-template-columns: 160px minmax(0, 1fr);
+  }
+
+  .inspector {
+    display: none;
+  }
+
+  .topBar {
+    height: auto;
+    align-items: start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 760px) {
+  .body,
+  .split {
+    grid-template-columns: 1fr;
+  }
+
+  .workspaceNav {
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid #d3dbe4;
+  }
+}
