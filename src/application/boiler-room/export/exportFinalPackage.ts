@@ -15,5 +15,6 @@ export const exportFinalPackage = (project: Project, catalog: EquipmentDefinitio
     "cover-letter.final.md": formatCoverLetterMarkdown(buildCoverLetter(project, catalog, readiness)),
     "project-snapshot.final.json": exportProjectJson(project),
     "checks.final.json": JSON.stringify(readiness, null, 2),
+    "evidence-snapshot.final.json": JSON.stringify({ refs: project.evidenceSnapshotRefs, status: readiness.evidenceStatus, generatedAt: new Date().toISOString() }, null, 2),
   };
 };

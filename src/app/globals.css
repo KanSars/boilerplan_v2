@@ -190,6 +190,17 @@ small {
   border-bottom: 1px solid #bfdbfe;
 }
 
+.toastBar {
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #064e3b;
+  background: #d1fae5;
+  border-bottom: 1px solid #a7f3d0;
+}
+
 .formGrid,
 .issueGrid,
 .exportGrid {
@@ -256,13 +267,57 @@ small {
   margin: 0 0 8px;
 }
 
-.row,
-.issueItem {
+.row {
   width: 100%;
   display: grid;
   gap: 4px;
   margin-bottom: 8px;
   text-align: left;
+}
+
+.issueItem {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.issueMain {
+  display: grid;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  text-align: left;
+}
+
+.issueActions,
+.readinessFilters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.issueActions button {
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.readinessFilters {
+  margin: 0 0 12px;
+}
+
+.readinessFilters span,
+.planHint {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #475569;
+  padding: 6px 9px;
 }
 
 .primary {
@@ -577,8 +632,14 @@ small {
   justify-content: flex-end;
 }
 
+.buttonRow.left {
+  justify-content: flex-start;
+}
+
 .planActions {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
 }

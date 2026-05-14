@@ -1,18 +1,23 @@
 import { type PointerEvent, useMemo, useRef, useState } from "react";
+import { applyReadinessDecisions, type ReadinessDecision, type ReadinessDecisionMap } from "../application/boiler-room/validation/applyReadinessDecisions";
 import { applyConnectionPointOverride } from "../application/boiler-room/equipment/applyConnectionPointOverride";
+import { removeEquipmentFromProject } from "../application/boiler-room/equipment/removeEquipmentFromProject";
 import { resolveWorldConnectionPoints } from "../application/boiler-room/equipment/resolveConnectionPoints";
 import { resolveEquipmentForProject } from "../application/boiler-room/equipment/resolveEquipmentForProject";
 import { confirmSystemConnection } from "../application/boiler-room/connections/confirmSystemConnection";
+import { overrideSystemConnection } from "../application/boiler-room/connections/overrideSystemConnection";
 import { buildEngineeringDrawing } from "../application/boiler-room/drawing/buildEngineeringDrawing";
 import { buildPreliminaryRoutes } from "../application/boiler-room/routing/buildPreliminaryRoutes";
 import { exportDraftPackage } from "../application/boiler-room/export/exportDraftPackage";
 import { exportFinalPackage } from "../application/boiler-room/export/exportFinalPackage";
 import { buildProjectReadinessReport } from "../application/boiler-room/validation/buildProjectReadinessReport";
 import { createPilotProject } from "../application/boiler-room/project-setup/createProjectFromInputs";
+import { updateProjectName, updateProjectPower, updateProjectRoom, updateProjectTemperatureSchedule } from "../application/boiler-room/project-setup/updateProjectInputs";
 import { resolveSystemConnections } from "../application/boiler-room/connections/resolveSystemConnections";
+import type { SystemConnection } from "../domain/connection/SystemConnection";
 import type { EquipmentDefinition, EquipmentWithPlacement, Placement } from "../domain/equipment/Equipment";
 import type { Project } from "../domain/project/Project";
-import type { ProjectReadinessReport } from "../domain/validation/Validation";
+import type { ProjectReadinessReport, ValidationIssue } from "../domain/validation/Validation";
 import { pilotEquipmentCatalog } from "../infrastructure/catalog/pilotCatalog";
 import "./globals.css";
 
@@ -56,11 +61,15 @@ export const App = () => {
   const [planZoom, setPlanZoom] = useState(1);
   const [schematicZoom, setSchematicZoom] = useState(1);
   const [drawingZoom, setDrawingZoom] = useState(1);
+  const [issueDecisions, setIssueDecisions] = useState<ReadinessDecisionMap>({});
+  const [toast, setToast] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const equipment = useMemo(() => resolveEquipmentForProject(project, catalog), [project, catalog]);
   const connections = useMemo(() => resolveSystemConnections(project, catalog), [project, catalog]);
   const routes = useMemo(() => buildPreliminaryRoutes(project, catalog, connections), [project, catalog, connections]);
-  const readiness = useMemo(() => buildProjectReadinessReport(project, catalog), [project, catalog]);
+  const rawReadiness = useMemo(() => buildProjectReadinessReport(project, catalog), [project, catalog]);
+  const readiness = useMemo(() => applyReadinessDecisions(rawReadiness, issueDecisions), [rawReadiness, issueDecisions]);
   const drawing = useMemo(() => buildEngineeringDrawing(project, catalog, readiness), [project, catalog, readiness]);
   const selected = equipment.find((item) => item.instance.id === selectedId) ?? equipment[0];
 
@@ -81,15 +90,12 @@ export const App = () => {
   };
 
   const deleteItem = (itemId: string) => {
-    setProject((current) => ({
-      ...current,
-      equipmentItems: current.equipmentItems.filter((item) => item.id !== itemId),
-      placements: current.placements.filter((placement) => placement.itemId !== itemId),
-      connectionOverrides: current.connectionOverrides.filter((connection) => connection.from.itemId !== itemId && connection.to?.itemId !== itemId),
-      updatedAt: new Date().toISOString(),
-    }));
-    const next = project.equipmentItems.find((item) => item.id !== itemId);
-    if (next) setSelectedId(next.id);
+    setProject((current) => {
+      const updated = removeEquipmentFromProject(current, itemId);
+      const next = updated.equipmentItems[0];
+      setSelectedId(next?.id ?? "");
+      return updated;
+    });
   };
 
   const addEquipment = (definition: EquipmentDefinition) => {
@@ -140,6 +146,60 @@ export const App = () => {
     setRoutePreview(true);
   };
 
+  const updateConnection = (connection: SystemConnection) => {
+    setProject((current) => ({
+      ...current,
+      connectionOverrides: [...current.connectionOverrides.filter((item) => item.id !== connection.id), connection],
+      updatedAt: new Date().toISOString(),
+    }));
+    setRoutePreview(true);
+  };
+
+  const navigateToIssue = (issue: ValidationIssue) => {
+    setWorkspace(issue.navigationTarget.workspace);
+    if (issue.navigationTarget.entityId) {
+      const affectedEquipment = issue.affectedEntities.find((id) => project.equipmentItems.some((item) => item.id === id));
+      if (affectedEquipment) setSelectedId(affectedEquipment);
+    }
+    if (issue.navigationTarget.focus && issue.navigationTarget.workspace === "inputs") setActiveHelp("inputs");
+  };
+
+  const setIssueDecision = (issue: ValidationIssue, decision: ReadinessDecision) => {
+    setIssueDecisions((current) => ({ ...current, [issue.id]: decision }));
+    if (decision === "resolved" && issue.category === "connection" && issue.affectedEntities[0]) {
+      const connection = connections.find((item) => item.id === issue.affectedEntities[0]);
+      if (connection) updateConnection(confirmSystemConnection(connection, "Подтверждено из проверки готовности"));
+    }
+  };
+
+  const download = (name: string, content: string) => {
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadPackage = (files: Record<string, string>) => Object.entries(files).forEach(([name, content]) => download(name, content));
+
+  const saveProject = () => {
+    const payload = JSON.stringify({ project, catalog, issueDecisions }, null, 2);
+    localStorage.setItem("boilerplan-ai-v2-project", payload);
+    download(`${project.id}.boilerplan.json`, payload);
+    setToast("Проект сохранен в браузере и выгружен JSON-файлом.");
+  };
+
+  const loadProject = async (file: File) => {
+    const payload = JSON.parse(await file.text()) as { project: Project; catalog?: EquipmentDefinition[]; issueDecisions?: ReadinessDecisionMap };
+    setProject(payload.project);
+    if (payload.catalog) setCatalog(payload.catalog);
+    setIssueDecisions(payload.issueDecisions ?? {});
+    setSelectedId(payload.project.equipmentItems[0]?.id ?? "");
+    setToast("Проект загружен из файла.");
+  };
+
   return (
     <div className="appShell">
       <header className="topBar">
@@ -152,10 +212,15 @@ export const App = () => {
             {translateReadiness(readiness.status)}
           </span>
           <span className="draftState">Черновик доступен · финал: {translateExport(readiness.exportReadiness.final)}</span>
-          <button type="button">Сохранить</button>
-          <button type="button">Загрузить</button>
+          <button type="button" onClick={saveProject}>Сохранить</button>
+          <button type="button" onClick={() => fileInputRef.current?.click()}>Загрузить</button>
           <button type="button" onClick={() => setWorkspace("readiness")}>Проверить</button>
-          <button type="button" onClick={() => setWorkspace("export")}>Черновой экспорт</button>
+          <button type="button" onClick={() => downloadPackage(exportDraftPackage(project, catalog, drawing, readiness))}>Скачать черновик</button>
+          <input ref={fileInputRef} type="file" accept="application/json,.json" hidden onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            if (file) void loadProject(file);
+            event.currentTarget.value = "";
+          }} />
           <button
             type="button"
             className={helpMode ? "helpButton active" : "helpButton"}
@@ -169,6 +234,7 @@ export const App = () => {
       </header>
 
       {helpMode && <div className="helpBar">{helpText[activeHelp]}</div>}
+      {toast && <div className="toastBar"><span>{toast}</span><button type="button" onClick={() => setToast("")}>Закрыть</button></div>}
 
       <div className="body">
         <nav className="workspaceNav" aria-label="Навигация по рабочим областям">
@@ -188,7 +254,7 @@ export const App = () => {
           ))}
         </nav>
         <main className="workspace">
-          {workspace === "inputs" && <InputsWorkspace project={project} readiness={readiness} />}
+          {workspace === "inputs" && <InputsWorkspace project={project} readiness={readiness} onProject={setProject} />}
           {workspace === "equipment" && <EquipmentWorkspace equipment={equipment} catalog={catalog} selectedId={selectedId} onSelect={setSelectedId} onAdd={addEquipment} onCatalogUpdate={setCatalog} />}
           {workspace === "plan" && (
             <PlanWorkspace
@@ -213,10 +279,10 @@ export const App = () => {
               onZoomChange={setPlanZoom}
             />
           )}
-          {workspace === "schematic" && <SchematicWorkspace connections={connections} onConfirmAll={confirmAllConnections} onHelp={setActiveHelp} zoom={schematicZoom} onZoomChange={setSchematicZoom} />}
+          {workspace === "schematic" && <SchematicWorkspace connections={connections} onConfirmAll={confirmAllConnections} onConnection={updateConnection} onHelp={setActiveHelp} zoom={schematicZoom} onZoomChange={setSchematicZoom} />}
           {workspace === "drawing" && <DrawingWorkspace drawing={drawing} zoom={drawingZoom} onZoomChange={setDrawingZoom} />}
-          {workspace === "readiness" && <ReadinessWorkspace readiness={readiness} onNavigate={setWorkspace} />}
-          {workspace === "export" && <ExportWorkspace project={project} catalog={catalog} drawing={drawing} readiness={readiness} />}
+          {workspace === "readiness" && <ReadinessWorkspace readiness={readiness} decisions={issueDecisions} onNavigate={navigateToIssue} onDecision={setIssueDecision} />}
+          {workspace === "export" && <ExportWorkspace project={project} catalog={catalog} drawing={drawing} readiness={readiness} onDownload={download} />}
         </main>
         {["equipment", "plan"].includes(workspace) && selected && (
           <InspectorPanel
@@ -235,7 +301,7 @@ export const App = () => {
   );
 };
 
-const InputsWorkspace = ({ project, readiness }: { project: Project; readiness: ProjectReadinessReport }) => (
+const InputsWorkspace = ({ project, readiness, onProject }: { project: Project; readiness: ProjectReadinessReport; onProject: (updater: (project: Project) => Project) => void }) => (
   <section>
     <div className="workspaceHeader">
       <p className="eyebrow">Паспорт проекта</p>
@@ -243,22 +309,19 @@ const InputsWorkspace = ({ project, readiness }: { project: Project; readiness: 
       <p>Эти данные используются одновременно для плана, проверок применимости, evidence-запросов и сопроводительного письма.</p>
     </div>
     <div className="formGrid">
-      {[
-        ["Название", project.name, "предоставлено пользователем / 0.8"],
-        ["Нормативная область", "РФ", "проверено / 1.0"],
-        ["Тип размещения", "отдельно стоящая", "проверено / 1.0"],
-        ["Тип / топливо", "газовая, природный газ", "проверено / 1.0"],
-        ["Назначение", "отопление, водогрейная", "проверено / 1.0"],
-        ["Мощность", `${project.projectInputs.targetPowerKw} кВт`, "паспорт / 0.65"],
-        ["Температурный график", `${project.projectInputs.temperatureSchedule.supplyC}/${project.projectInputs.temperatureSchedule.returnC}`, "предоставлено пользователем / 0.8"],
-        ["Помещение", `${project.room.widthMm} x ${project.room.lengthMm} x ${project.room.heightMm} мм`, "предоставлено пользователем / 0.8"],
-      ].map(([label, value, status]) => (
-        <label key={label} className="fieldCard">
-          <span>{label}</span>
-          <input value={value} readOnly />
-          <small>{status}</small>
-        </label>
-      ))}
+      <label className="fieldCard"><span>Название</span><input value={project.name} onChange={(event) => onProject((current) => updateProjectName(current, event.target.value))} /><small>{sourceStatusText("от пользователя", 0.8)}</small></label>
+      <label className="fieldCard"><span>Нормативная область</span><input value="РФ" readOnly /><small>{sourceStatusText("проверено", 1)}</small></label>
+      <label className="fieldCard"><span>Тип размещения</span><input value="отдельно стоящая" readOnly /><small>{sourceStatusText("проверено", 1)}</small></label>
+      <label className="fieldCard"><span>Тип / топливо</span><input value="газовая, природный газ" readOnly /><small>{sourceStatusText("проверено", 1)}</small></label>
+      <label className="fieldCard"><span>Назначение</span><input value="отопление, водогрейная" readOnly /><small>{sourceStatusText("проверено", 1)}</small></label>
+      <label className="fieldCard"><span>Мощность, кВт</span><input type="number" value={project.projectInputs.targetPowerKw} onChange={(event) => onProject((current) => updateProjectPower(current, Number(event.target.value)))} /><small>{sourceStatusText("паспортные данные", 0.65)}</small></label>
+      <label className="fieldCard"><span>Температурный график</span><input value={`${project.projectInputs.temperatureSchedule.supplyC}/${project.projectInputs.temperatureSchedule.returnC}`} onChange={(event) => {
+        const [supply, ret] = event.target.value.split("/").map(Number);
+        if (Number.isFinite(supply) && Number.isFinite(ret)) onProject((current) => updateProjectTemperatureSchedule(current, supply, ret));
+      }} /><small>{sourceStatusText("от пользователя", 0.8)}</small></label>
+      <label className="fieldCard"><span>Ширина помещения, мм</span><input type="number" value={project.room.widthMm} onChange={(event) => onProject((current) => updateProjectRoom(current, { widthMm: Number(event.target.value) }))} /><small>{sourceStatusText("от пользователя", 0.8)}</small></label>
+      <label className="fieldCard"><span>Длина помещения, мм</span><input type="number" value={project.room.lengthMm} onChange={(event) => onProject((current) => updateProjectRoom(current, { lengthMm: Number(event.target.value) }))} /><small>{sourceStatusText("от пользователя", 0.8)}</small></label>
+      <label className="fieldCard"><span>Высота помещения, мм</span><input type="number" value={project.room.heightMm} onChange={(event) => onProject((current) => updateProjectRoom(current, { heightMm: Number(event.target.value) }))} /><small>{sourceStatusText("от пользователя", 0.8)}</small></label>
     </div>
     <ReadinessStrip readiness={readiness} />
   </section>
@@ -526,6 +589,7 @@ const PlanWorkspace = ({
         </div>
       </div>
       <div className="planActions">
+        <span className="planHint">Навигация: тяните пустое место плана. Редактирование: тяните объект. Голубой контур — зона обслуживания.</span>
         <button type="button" onClick={() => onRotate(selectedId)}>Повернуть выбранный</button>
         <button type="button" className="dangerButton" onClick={() => onDelete(selectedId)}>Удалить выбранный</button>
       </div>
@@ -569,12 +633,14 @@ const EquipmentPlanSymbol = ({ x, y, width, height, item }: { x: number; y: numb
 const SchematicWorkspace = ({
   connections,
   onConfirmAll,
+  onConnection,
   onHelp,
   zoom,
   onZoomChange,
 }: {
   connections: ReturnType<typeof resolveSystemConnections>;
   onConfirmAll: () => void;
+  onConnection: (connection: SystemConnection) => void;
   onHelp: (key: HelpKey) => void;
   zoom: number;
   onZoomChange: (zoom: number) => void;
@@ -627,8 +693,9 @@ const SchematicWorkspace = ({
         </svg>
       </div>
     </div>
-    <details className="connectionDetails">
-      <summary>Автоматически найденные связи ({connections.length})</summary>
+    <section className="connectionDetails">
+      <h3>Связи схемы ({connections.length})</h3>
+      <p className="muted">Здесь подтверждаются автосвязи, переопределяются спорные решения и фиксируются ручные CAD-действия.</p>
       <div className="connectionList">
         {connections.map((connection) => (
           <article key={connection.id} className="connectionCard">
@@ -636,10 +703,15 @@ const SchematicWorkspace = ({
             <p>{connectionLabel(connection.from.itemId, connection.from.pointId)} {"->"} {connection.to ? connectionLabel(connection.to.itemId, connection.to.pointId) : "ручное оформление"}</p>
             <span>{translateConnection(connection.status)} · {translateReview(connection.reviewStatus)}</span>
             <small>{connection.explanation}</small>
+            <div className="buttonRow left">
+              <button type="button" onClick={() => onConnection(confirmSystemConnection(connection, "Подтверждено в схеме"))}>Подтвердить</button>
+              <button type="button" onClick={() => onConnection(overrideSystemConnection(connection, { dnMm: connection.dnMm }, "Пользователь подтвердил ручное переопределение связи"))}>Переопределить</button>
+              <button type="button" onClick={() => onConnection({ ...connection, status: "blocked", reviewStatus: "manual_cad_action", source: "user", userDecision: { decidedAt: new Date().toISOString(), reason: "Требуется ручное CAD-оформление", previousStatus: connection.status } })}>В ручное CAD</button>
+            </div>
           </article>
         ))}
       </div>
-    </details>
+    </section>
   </section>
 );
 
@@ -720,23 +792,47 @@ const DrawingWorkspace = ({
   </section>
 );
 
-const ReadinessWorkspace = ({ readiness, onNavigate }: { readiness: ProjectReadinessReport; onNavigate: (workspace: Workspace) => void }) => (
+const ReadinessWorkspace = ({
+  readiness,
+  decisions,
+  onNavigate,
+  onDecision,
+}: {
+  readiness: ProjectReadinessReport;
+  decisions: ReadinessDecisionMap;
+  onNavigate: (issue: ValidationIssue) => void;
+  onDecision: (issue: ValidationIssue, decision: ReadinessDecision) => void;
+}) => (
   <section>
     <div className="workspaceHeader">
       <p className="eyebrow">Готовность проекта</p>
       <h2>Проверка</h2>
       <ReadinessStrip readiness={readiness} />
     </div>
+    <div className="readinessFilters">
+      <span>Финал: {translateExport(readiness.exportReadiness.final)}</span>
+      <span>Блокирует финал: {readiness.blockers.length + readiness.unresolvedReviewRequired.length}</span>
+      <span>Закрыто вручную: {Object.keys(decisions).length}</span>
+    </div>
     <div className="issueGrid">
       {Object.entries(readiness.checks).map(([category, issues]) => (
         <article key={category} className="issuePanel">
           <h3>{translateCategory(category)}</h3>
           {issues.length === 0 ? <p className="muted">Нет замечаний</p> : issues.map((issue) => (
-            <button key={issue.id} type="button" className="issueItem" onClick={() => onNavigate(issue.navigationTarget.workspace)}>
-              <strong>{issue.title}</strong>
-              <span>{translateSeverity(issue.severity)} · {translateReview(issue.status)}</span>
-              <small>{issue.description}</small>
-            </button>
+            <div key={issue.id} className="issueItem">
+              <button type="button" className="issueMain" onClick={() => onNavigate(issue)}>
+                <strong>{issue.title}</strong>
+                <span>{translateSeverity(issue.severity)} · {translateReview(issue.status)} · {issue.canBlockFinalExport ? "блокирует финал" : "не блокирует финал"}</span>
+                <small>{issue.description}</small>
+              </button>
+              <div className="issueActions">
+                <button type="button" onClick={() => onNavigate(issue)}>Исправить</button>
+                <button type="button" onClick={() => onDecision(issue, "resolved")}>Закрыто</button>
+                <button type="button" onClick={() => onDecision(issue, "not_applicable")}>Не применимо</button>
+                <button type="button" onClick={() => onDecision(issue, "manual_cad_action")}>Ручное CAD</button>
+                <button type="button" onClick={() => onDecision(issue, "blocked")}>Блокер</button>
+              </div>
+            </div>
           ))}
         </article>
       ))}
@@ -744,20 +840,11 @@ const ReadinessWorkspace = ({ readiness, onNavigate }: { readiness: ProjectReadi
   </section>
 );
 
-const ExportWorkspace = ({ project, catalog, drawing, readiness }: { project: Project; catalog: EquipmentDefinition[]; drawing: ReturnType<typeof buildEngineeringDrawing>; readiness: ProjectReadinessReport }) => {
+const ExportWorkspace = ({ project, catalog, drawing, readiness, onDownload }: { project: Project; catalog: EquipmentDefinition[]; drawing: ReturnType<typeof buildEngineeringDrawing>; readiness: ProjectReadinessReport; onDownload: (name: string, content: string) => void }) => {
   const draft = exportDraftPackage(project, catalog, drawing, readiness);
-  const download = (name: string, content: string) => {
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = name;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
   const tryFinal = () => {
     const final = exportFinalPackage(project, catalog, drawing, readiness);
-    Object.entries(final).forEach(([name, content]) => download(name, content));
+    Object.entries(final).forEach(([name, content]) => onDownload(name, content));
   };
   return (
     <section>
@@ -769,7 +856,7 @@ const ExportWorkspace = ({ project, catalog, drawing, readiness }: { project: Pr
         <article>
           <h3>Черновые выгрузки</h3>
           <p>Доступны всегда и помечены как черновые или неполные при наличии незакрытых замечаний.</p>
-          {Object.entries(draft).map(([file, content]) => <button key={file} type="button" className="fileButton" onClick={() => download(file, content)}>{file}</button>)}
+          {Object.entries(draft).map(([file, content]) => <button key={file} type="button" className="fileButton" onClick={() => onDownload(file, content)}><span>{exportFileLabel(file)}</span><small>{file}</small></button>)}
         </article>
         <article>
           <h3>Финальный пакет</h3>
@@ -812,7 +899,7 @@ const InspectorPanel = ({
         <dt>Тип</dt><dd>{selected.definition.name}</dd>
         <dt>Позиция</dt><dd>{selected.placement?.placed ? `${selected.placement.xMm}, ${selected.placement.yMm}, ${selected.placement.rotationDeg}°` : "не размещено"}</dd>
         <dt>Статус</dt><dd>{translateReview(selected.instance.status)}</dd>
-        <dt>Override</dt><dd>{selected.instance.connectionPointOverrides.length}</dd>
+        <dt>Уточнения</dt><dd>{selected.instance.connectionPointOverrides.length}</dd>
       </dl>
       <ConnectionPointPreview item={selected} selectedPointId={point?.pointId ?? ""} onSelect={onPointSelect} compact />
       <h3>Точки подключения экземпляра</h3>
@@ -821,13 +908,13 @@ const InspectorPanel = ({
           <button key={entry.pointId} type="button" className={entry.pointId === point?.pointId ? "cpRow active" : "cpRow"} onClick={() => onPointSelect(entry.pointId)}>
             <strong>{entry.label}</strong>
             <span>{translatePointType(entry.type)} · DN{entry.dnMm ?? "-"} · мир X {Math.round(entry.xMm)}, Y {Math.round(entry.yMm)}</span>
-            <small>{entry.overrides.length ? "есть override" : "из карточки каталога"} · {translateData(entry.status)}</small>
+            <small>{entry.overrides.length ? "есть уточнение экземпляра" : "из карточки каталога"} · {translateData(entry.status)}</small>
           </button>
         ))}
       </div>
       {point && (
         <div className="pointEditor" onMouseEnter={() => onHelp("override")}>
-          <h4>Override выбранной точки</h4>
+          <h4>Уточнение выбранной точки</h4>
           <NumberEdit label="X, мм" value={point.localX} onChange={(value) => onPointPatch("localX", value)} />
           <NumberEdit label="Y, мм" value={point.localY} onChange={(value) => onPointPatch("localY", value)} />
           <NumberEdit label="Z, мм" value={point.localZ} onChange={(value) => onPointPatch("localZ", value)} />
@@ -938,11 +1025,21 @@ const translateExport = (value: string) => ({ draft_available: "черновик
 const translateReview = (value: string) => ({ draft: "черновик", needs_data: "нужны данные", needs_confirmation: "нужно подтвердить", verified: "проверено", resolved: "закрыто", not_applicable: "не применимо", blocked: "блокер", manual_cad_action: "ручное CAD-действие" }[value] ?? value);
 const translateConnection = (value: string) => ({ auto_detected: "найдено автоматически", user_confirmed: "подтверждено", user_overridden: "переопределено", blocked: "заблокировано", ambiguous: "неоднозначно" }[value] ?? value);
 const translateSeverity = (value: string) => ({ info: "инфо", warning: "предупреждение", error: "ошибка", blocker: "блокер" }[value] ?? value);
-const translateData = (value: string) => ({ unknown: "неизвестно", placeholder: "placeholder", user_provided: "от пользователя", catalog: "каталог", passport: "паспорт", calculated: "расчет", verified: "проверено", overridden: "переопределено", not_applicable: "не применимо", blocked: "блокер" }[value] ?? value);
+const translateData = (value: string) => ({ unknown: "неизвестно", placeholder: "заглушка, требует замены", user_provided: "от пользователя", catalog: "каталог", passport: "паспорт", calculated: "расчет", verified: "проверено", overridden: "уточнено", not_applicable: "не применимо", blocked: "блокер" }[value] ?? value);
 const translatePointType = (value: string) => ({ supply: "подача", return: "обратка", gas: "газ", flue: "дымоход", electric: "электрика", signal: "сигнал", drain: "дренаж", "make-up": "подпитка", other: "другое" }[value] ?? value);
 const translateDirection = (value?: string) => ({ left: "влево", right: "вправо", top: "вверх на плане", bottom: "вниз на плане", front: "фронт", back: "зад", up: "вверх", down: "вниз" }[value ?? ""] ?? "не задано");
 const pointColor = (type: string) => ({ supply: "#dc2626", return: "#2563eb", gas: "#a16207", flue: "#475569", electric: "#7c3aed", signal: "#0891b2" }[type] ?? "#0369a1");
 const stroke = (layer: string) => layer === "PIPE_SUPPLY" ? "#b91c1c" : layer === "PIPE_RETURN" ? "#1d4ed8" : layer === "PIPE_GAS" ? "#a16207" : layer === "WARNING" ? "#b45309" : "#111827";
+const sourceStatusText = (source: string, confidence: number): string => `Источник: ${source}. Уверенность ${Math.round(confidence * 100)}%.`;
+const exportFileLabel = (file: string): string => ({
+  "project.draft.json": "JSON проекта",
+  "equipment.draft.csv": "CSV состава оборудования",
+  "plan.draft.svg": "SVG плана помещения",
+  "sheet.draft.svg": "SVG листа A3",
+  "drawing.draft.dxf": "DXF черновой",
+  "diagnostic-report.draft.md": "Диагностический отчет",
+  "cover-letter.draft.md": "Сопроводительное письмо",
+}[file] ?? file);
 const connectionLabel = (itemId: string, pointId: string): string => {
   const item = {
     inst_boiler_1: "К1",
