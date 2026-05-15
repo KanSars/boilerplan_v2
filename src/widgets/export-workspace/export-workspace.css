@@ -1,0 +1,13 @@
+.exportGrid article {
+  min-height: 260px;
+}
+
+.fileChip,
+.blockerLine {
+  margin: 0 6px 6px 0;
+}
+
+.fileButton {
+  width: 100%;
+  margin-bottom: 8px;
+}

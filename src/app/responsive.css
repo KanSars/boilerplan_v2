@@ -1,0 +1,29 @@
+@media (max-width: 1080px) {
+  .body {
+    grid-template-columns: 160px minmax(0, 1fr);
+  }
+
+  .inspector {
+    display: none;
+  }
+
+  .topBar {
+    height: auto;
+    align-items: start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 760px) {
+  .body,
+  .split {
+    grid-template-columns: 1fr;
+  }
+
+  .workspaceNav {
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid #d3dbe4;
+  }
+}

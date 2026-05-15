@@ -1,0 +1,144 @@
+.formGrid,
+.issueGrid,
+.exportGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.fieldCard,
+.issuePanel,
+.exportGrid article,
+.editorPane,
+.listPane,
+.inspector,
+.connectionCard {
+  background: #ffffff;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.fieldCard {
+  display: grid;
+  gap: 8px;
+}
+
+.fieldCard input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 9px;
+}
+
+.readinessStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.readinessStrip span,
+.fileChip,
+.blockerLine {
+  display: inline-flex;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 6px 9px;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.groupBlock {
+  margin-bottom: 16px;
+}
+
+.groupBlock h3,
+.editorPane h3,
+.issuePanel h3 {
+  margin: 0 0 8px;
+}
+
+.row {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  margin-bottom: 8px;
+  text-align: left;
+}
+
+.issueItem {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.issueMain {
+  display: grid;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  text-align: left;
+}
+
+.issueActions,
+.readinessFilters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.issueActions button {
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.readinessFilters {
+  margin: 0 0 12px;
+}
+
+.readinessFilters span,
+.planHint {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #475569;
+  padding: 6px 9px;
+}
+
+.primary {
+  background: #1d4ed8;
+  color: #ffffff;
+  border-color: #1d4ed8;
+}
+
+.facts,
+.cpGrid,
+.connectionList {
+  display: grid;
+  gap: 10px;
+}
+
+.cpRow {
+  display: grid;
+  gap: 3px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.cpRow.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+}

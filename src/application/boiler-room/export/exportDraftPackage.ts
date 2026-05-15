@@ -2,19 +2,18 @@ import type { EquipmentDefinition } from "../../../domain/equipment/Equipment";
 import type { Project } from "../../../domain/project/Project";
 import type { ProjectReadinessReport } from "../../../domain/validation/Validation";
 import type { EngineeringDrawing } from "../../../domain/drawing/EngineeringDrawing";
+import type { DrawingExportAdapters } from "../../../domain/export/ExportAdapters";
 import { buildCoverLetter, formatCoverLetterMarkdown } from "./buildCoverLetter";
-import { exportDxf } from "./exportDxf";
 import { exportEquipmentCsv } from "./exportEquipmentCsv";
 import { exportProjectJson } from "./exportProjectJson";
 import { exportPlanSvg } from "./exportPlanSvg";
-import { exportSheetSvg } from "./exportSheetSvg";
 
-export const exportDraftPackage = (project: Project, catalog: EquipmentDefinition[], drawing: EngineeringDrawing, readiness: ProjectReadinessReport) => ({
+export const exportDraftPackage = (project: Project, catalog: EquipmentDefinition[], drawing: EngineeringDrawing, readiness: ProjectReadinessReport, adapters: DrawingExportAdapters) => ({
   "project.draft.json": exportProjectJson(project),
   "equipment.draft.csv": exportEquipmentCsv(project, catalog),
   "plan.draft.svg": exportPlanSvg(project, catalog),
-  "sheet.draft.svg": exportSheetSvg(drawing),
-  "drawing.draft.dxf": exportDxf(drawing),
+  "sheet.draft.svg": adapters.exportSheetSvg(drawing),
+  "drawing.draft.dxf": adapters.exportDxf(drawing),
   "diagnostic-report.draft.md": buildDiagnosticReport(readiness),
   "cover-letter.draft.md": formatCoverLetterMarkdown(buildCoverLetter(project, catalog, readiness)),
 });

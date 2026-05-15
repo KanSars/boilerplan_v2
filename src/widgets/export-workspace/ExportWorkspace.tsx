@@ -1,15 +1,16 @@
 import { buildEngineeringDrawing } from "../../application/boiler-room/drawing/buildEngineeringDrawing";
 import { exportDraftPackage } from "../../application/boiler-room/export/exportDraftPackage";
 import { exportFinalPackage } from "../../application/boiler-room/export/exportFinalPackage";
+import { drawingExportAdapters } from "../../infrastructure/export/drawingExportAdapters";
 import type { EquipmentDefinition } from "../../domain/equipment/Equipment";
 import type { Project } from "../../domain/project/Project";
 import type { ProjectReadinessReport } from "../../domain/validation/Validation";
 import { exportFileLabel } from "../../shared/formatting/boilerRoomFormatters";
 
 export const ExportWorkspace = ({ project, catalog, drawing, readiness, onDownload }: { project: Project; catalog: EquipmentDefinition[]; drawing: ReturnType<typeof buildEngineeringDrawing>; readiness: ProjectReadinessReport; onDownload: (name: string, content: string) => void }) => {
-  const draft = exportDraftPackage(project, catalog, drawing, readiness);
+  const draft = exportDraftPackage(project, catalog, drawing, readiness, drawingExportAdapters);
   const tryFinal = () => {
-    const final = exportFinalPackage(project, catalog, drawing, readiness);
+    const final = exportFinalPackage(project, catalog, drawing, readiness, drawingExportAdapters);
     Object.entries(final).forEach(([name, content]) => onDownload(name, content));
   };
   return (
@@ -34,5 +35,4 @@ export const ExportWorkspace = ({ project, catalog, drawing, readiness, onDownlo
     </section>
   );
 };
-
 

@@ -1,0 +1,120 @@
+.connectionCard {
+  display: grid;
+  gap: 8px;
+}
+
+.schematicViewport {
+  width: 100%;
+  height: min(74vh, 760px);
+  min-height: 420px;
+  overflow: auto;
+  border: 1px solid #ccd6e0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.schematicStage {
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.schematicSvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: #ffffff;
+}
+
+.schematicTitle {
+  font-size: 22px;
+  font-weight: 800;
+  fill: #172033;
+}
+
+.schematicNode {
+  fill: #f8fafc;
+  stroke: #111827;
+  stroke-width: 2;
+}
+
+.schematicBoilerCircle {
+  fill: #ffffff;
+  stroke: #111827;
+  stroke-width: 2;
+}
+
+.schematicNodeLabel {
+  font-size: 24px;
+  font-weight: 800;
+  fill: #111827;
+}
+
+.schematicNodeNote,
+.schematicSmall {
+  font-size: 16px;
+  fill: #475569;
+}
+
+.schematicPipe {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.schematicPipe.supply {
+  stroke: #b91c1c;
+}
+
+.supplyText {
+  fill: #b91c1c;
+}
+
+.schematicPipe.return {
+  stroke: #1d4ed8;
+}
+
+.returnText {
+  fill: #1d4ed8;
+}
+
+.schematicPipe.gas {
+  stroke: #a16207;
+}
+
+.gasText {
+  fill: #a16207;
+}
+
+.schematicPipe.flue {
+  stroke: #475569;
+  stroke-dasharray: 10 8;
+}
+
+.schematicLabel {
+  font-size: 16px;
+  font-weight: 700;
+  fill: #172033;
+}
+
+.schematicValve {
+  fill: #ffffff;
+  stroke: #111827;
+  stroke-width: 2;
+}
+
+.schematicValveLine {
+  stroke: #111827;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.connectionDetails {
+  margin-top: 12px;
+}
+
+.connectionDetails summary {
+  cursor: pointer;
+  font-weight: 700;
+  margin-bottom: 10px;
+}

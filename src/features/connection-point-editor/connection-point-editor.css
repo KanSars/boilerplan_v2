@@ -1,0 +1,45 @@
+.cardEditorGrid,
+.pointEditor {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.cardEditorGrid label,
+.pointEditor label,
+.inspector label {
+  display: grid;
+  gap: 5px;
+}
+
+.cardEditorGrid input,
+.pointEditor input,
+.inspector input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.pointPreview {
+  width: 100%;
+  height: 220px;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.pointPreview.compact {
+  height: 142px;
+  margin: 12px 0;
+}
+
+.previewPoint {
+  cursor: pointer;
+}
+
+.previewPoint.active circle {
+  stroke: #0f172a;
+  stroke-width: 28px;
+}

@@ -1,0 +1,167 @@
+.appShell {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.topBar {
+  height: 76px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #d3dbe4;
+  background: #ffffff;
+}
+
+.topBar h1,
+.workspaceHeader h2,
+.inspector h2 {
+  margin: 0;
+}
+
+.topBar h1 {
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.workspaceHeader h2 {
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.inspector h2 {
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: #64748b;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.statusCluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: end;
+}
+
+.readinessBadge {
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-weight: 700;
+}
+
+.readinessBadge.blocked {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.readinessBadge.ready {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.draftState,
+.muted,
+small {
+  color: #64748b;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.body:has(.inspector) {
+  grid-template-columns: 210px minmax(0, 1fr) 280px;
+}
+
+.workspaceNav {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-right: 1px solid #d3dbe4;
+  background: #f8fafc;
+  overflow: auto;
+}
+
+.workspaceNav button {
+  text-align: left;
+}
+
+.workspaceNav button.active,
+.row.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.workspace {
+  min-width: 0;
+  min-height: 0;
+  padding: 18px;
+  overflow: auto;
+}
+
+.workspaceHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.workspaceHeader p {
+  max-width: 760px;
+  margin: 0;
+}
+
+.toolbarHeader {
+  display: grid;
+  grid-template-columns: minmax(180px, 320px) minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.helpButton {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-weight: 800;
+}
+
+.helpButton.active {
+  color: #ffffff;
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.helpBar {
+  padding: 10px 20px;
+  color: #17315f;
+  background: #dbeafe;
+  border-bottom: 1px solid #bfdbfe;
+}
+
+.toastBar {
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #064e3b;
+  background: #d1fae5;
+  border-bottom: 1px solid #a7f3d0;
+}

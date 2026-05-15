@@ -21,6 +21,7 @@ import { loadEvidenceDataset } from "../application/boiler-room/evidence/loadEvi
 import { evaluateCompiledRules } from "../application/boiler-room/evidence/evaluateCompiledRules";
 import { exportDraftPackage } from "../application/boiler-room/export/exportDraftPackage";
 import { exportFinalPackage } from "../application/boiler-room/export/exportFinalPackage";
+import { drawingExportAdapters } from "../infrastructure/export/drawingExportAdapters";
 import { buildCoverLetter } from "../application/boiler-room/export/buildCoverLetter";
 
 describe("pilot project domain", () => {
@@ -130,11 +131,11 @@ describe("pilot project domain", () => {
     const project = createPilotProject();
     const readiness = buildProjectReadinessReport(project, pilotEquipmentCatalog);
     const drawing = buildEngineeringDrawing(project, pilotEquipmentCatalog, readiness);
-    const draft = exportDraftPackage(project, pilotEquipmentCatalog, drawing, readiness);
+    const draft = exportDraftPackage(project, pilotEquipmentCatalog, drawing, readiness, drawingExportAdapters);
     expect(Object.keys(draft)).toContain("drawing.draft.dxf");
     expect(Object.keys(draft)).toContain("plan.draft.svg");
     expect(draft["diagnostic-report.draft.md"]).toContain("Проверки по категориям");
-    expect(() => exportFinalPackage(project, pilotEquipmentCatalog, drawing, readiness)).toThrow("Final package blocked");
+    expect(() => exportFinalPackage(project, pilotEquipmentCatalog, drawing, readiness, drawingExportAdapters)).toThrow("Final package blocked");
   });
 
   it("applies readiness decisions and can produce final evidence snapshot", () => {
@@ -143,7 +144,7 @@ describe("pilot project domain", () => {
     const decisions = Object.fromEntries(Object.values(readiness.checks).flatMap((issues) => issues).filter((issue) => issue.canBlockFinalExport).map((issue) => [issue.id, "resolved" as const]));
     const resolved = applyReadinessDecisions(readiness, decisions);
     const drawing = buildEngineeringDrawing(project, pilotEquipmentCatalog, resolved);
-    const final = exportFinalPackage(project, pilotEquipmentCatalog, drawing, resolved);
+    const final = exportFinalPackage(project, pilotEquipmentCatalog, drawing, resolved, drawingExportAdapters);
     expect(resolved.exportReadiness.final).toBe("final_ready");
     expect(Object.keys(final)).toContain("evidence-snapshot.final.json");
   });

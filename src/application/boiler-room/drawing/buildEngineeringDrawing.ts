@@ -41,9 +41,6 @@ export const buildEngineeringDrawing = (
   };
 };
 
-export const buildDrawingSheet = buildEngineeringDrawing;
-export const validateEngineeringDrawing = (drawing: EngineeringDrawing): boolean => drawing.entities.length > 0;
-
 const addSheet = (entities: DrawingEntity[], project: Project, readiness: ProjectReadinessReport) => {
   entities.push(
     rect(5, 5, 410, 287, "SHEET_FRAME"),
